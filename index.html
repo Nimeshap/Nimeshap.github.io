@@ -883,13 +883,13 @@
                 <div class="contact-form">
                     <form id="contact-form">
                         <div class="form-group">
-                            <input type="text" class="form-control" placeholder="Your Name" required>
+                            <input type="text" class="form-control" placeholder="Your Name">
                         </div>
                         <div class="form-group">
-                            <input type="email" class="form-control" placeholder="Your Email" required>
+                            <input type="email" class="form-control" placeholder="Your Email">
                         </div>
                         <div class="form-group">
-                            <textarea class="form-control" rows="5" placeholder="Your Message" required></textarea>
+                            <textarea class="form-control" rows="5" placeholder="Your Message"></textarea>
                         </div>
                         <button type="submit" class="btn">Message Me on LinkedIn</button>
                     </form>
@@ -955,22 +955,99 @@
             const contactForm = document.getElementById('contact-form');
 
             if (contactForm) {
+                // Create error message elements for each field
+                const fields = ['name', 'email', 'message'];
+                const errorDivs = {};
+
+                fields.forEach(field => {
+                    // Create error element
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'error-message';
+                    errorDiv.style.color = '#ff3860';
+                    errorDiv.style.fontSize = '0.8rem';
+                    errorDiv.style.marginTop = '0.25rem';
+                    errorDiv.style.display = 'none';
+
+                    // Find the corresponding form group and append error element
+                    let selector;
+                    if (field === 'name') {
+                        selector = 'input[placeholder="Your Name"]';
+                    } else if (field === 'email') {
+                        selector = 'input[placeholder="Your Email"]';
+                    } else {
+                        selector = 'textarea[placeholder="Your Message"]';
+                    }
+
+                    const inputElement = contactForm.querySelector(selector);
+                    const formGroup = inputElement.parentNode;
+                    formGroup.appendChild(errorDiv);
+
+                    errorDivs[field] = errorDiv;
+
+                    // Add blur event listener for real-time validation
+                    inputElement.addEventListener('blur', function () {
+                        validateField(this, field);
+                    });
+
+                    // Add input event listener to hide error when user starts typing again
+                    inputElement.addEventListener('input', function () {
+                        errorDivs[field].style.display = 'none';
+                    });
+                });
+
+                function validateField(input, fieldType) {
+                    // Hide previous error
+                    errorDivs[fieldType].style.display = 'none';
+
+                    // Check if empty
+                    if (!input.value.trim()) {
+                        errorDivs[fieldType].textContent = `Please enter your ${fieldType}`;
+                        errorDivs[fieldType].style.display = 'block';
+                        return false;
+                    }
+
+                    // Additional validation for email
+                    if (fieldType === 'email') {
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                        if (!emailRegex.test(input.value)) {
+                            errorDivs[fieldType].textContent = 'Please enter a valid email address';
+                            errorDivs[fieldType].style.display = 'block';
+                            return false;
+                        }
+                    }
+
+                    return true;
+                }
+
                 contactForm.addEventListener('submit', function (event) {
                     event.preventDefault();
 
-                    // Get the user's name and message from the form
-                    const userName = document.querySelector('input[placeholder="Your Name"]').value;
-                    const userMessage = document.querySelector('textarea[placeholder="Your Message"]').value;
+                    // Get form elements
+                    const nameInput = this.querySelector('input[placeholder="Your Name"]');
+                    const emailInput = this.querySelector('input[placeholder="Your Email"]');
+                    const messageInput = this.querySelector('textarea[placeholder="Your Message"]');
 
-                    // Create the LinkedIn message URL with pre-filled subject and message
-                    const linkedinId = 'nimesha-perera';
-                    const subject = encodeURIComponent(`Message from ${userName} via Portfolio`);
-                    const body = encodeURIComponent(`Hello Nimesha,\n\n${userMessage}\n\nSent via your portfolio website.`);
+                    // Validate all fields
+                    const isNameValid = validateField(nameInput, 'name');
+                    const isEmailValid = validateField(emailInput, 'email');
+                    const isMessageValid = validateField(messageInput, 'message');
 
-                    const linkedinUrl = `https://www.linkedin.com/messaging/compose/?to=${linkedinId}&subject=${subject}&body=${body}`;
+                    // Only proceed if all validations pass
+                    if (isNameValid && isEmailValid && isMessageValid) {
+                        // Create the LinkedIn message URL with pre-filled subject and message
+                        const userName = nameInput.value;
+                        const userEmail = emailInput.value;
+                        const userMessage = messageInput.value;
 
-                    // Open LinkedIn in a new tab
-                    window.open(linkedinUrl, '_blank');
+                        const linkedinId = 'nimesha-perera';
+                        const subject = encodeURIComponent(`Message from ${userName} via Portfolio`);
+                        const body = encodeURIComponent(`Hello Nimesha,\n\nFrom: ${userName} (${userEmail})\n\n${userMessage}\n\nSent via your portfolio website.`);
+
+                        const linkedinUrl = `https://www.linkedin.com/messaging/compose/?to=${linkedinId}&subject=${subject}&body=${body}`;
+
+                        // Open LinkedIn in a new tab
+                        window.open(linkedinUrl, '_blank');
+                    }
                 });
             }
         });
